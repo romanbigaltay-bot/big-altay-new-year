@@ -1,0 +1,9 @@
+# Локальные секреты и артефакты — никогда не коммитить
+config.local.php
+*.local.php
+.env
+
+# Служебное
+.DS_Store
+Thumbs.db
+node_modules/
