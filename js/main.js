@@ -266,7 +266,8 @@
             });
         });
 
-        // External "Забронировать номер" buttons from sanatorium cards
+        // External "Забронировать номер" buttons from sanatorium cards and
+        // "Выбрать эту программу" buttons in #programs section
         const cardBookingButtons = document.querySelectorAll('[data-sanatorium-choice]');
         cardBookingButtons.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -275,6 +276,19 @@
                 const matchOpt = form.querySelector(`#sanatoriumPopover .form-popover__option[data-val="${choice}"]`);
                 if (matchOpt) {
                     selectSanatorium(matchOpt.dataset.val, matchOpt.dataset.title, matchOpt.dataset.sub);
+                }
+                // Program button: prefill the chosen NY program into the
+                // wishes/comment textarea as plain text (idempotent).
+                const programTitle = (btn.dataset.programTitle || '').trim();
+                if (programTitle) {
+                    const commentEl = document.getElementById('bookingComment');
+                    if (commentEl) {
+                        const line = `Новогодняя программа: ${programTitle}`;
+                        const cur = commentEl.value.trim();
+                        if (!cur.includes(line)) {
+                            commentEl.value = cur ? `${cur}\n${line}` : line;
+                        }
+                    }
                 }
             });
         });

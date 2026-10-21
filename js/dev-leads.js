@@ -53,9 +53,9 @@
 
     /**
      * Формирование полей лида по образцу functions.php основного сайта:
-     * TITLE = "Имя | Контакт · Санаторий", контакты в PHONE/EMAIL, UTM_*
-     * отдельными полями; детали (включая новогоднюю программу) — комментарием
-     * в таймлайн. Ярлыки «заявка/форма» в TITLE не пишем — лишняя информация.
+     * TITLE = "Имя | Контакт — Новый год 2027 · Санаторий", контакты в PHONE/EMAIL,
+     * UTM_* отдельными полями; детали (включая новогоднюю программу из комментария)
+     * — комментарием в таймлайн. Ярлыки «заявка/форма» в TITLE не пишем.
      */
     function buildLeadFields(payload) {
         const utm = payload.utm && typeof payload.utm === 'object' ? payload.utm : {};
@@ -64,8 +64,9 @@
         const email = (payload.email || '').trim();
         const contactLabel = phone || email || (payload.contactMethod === 'MAX' ? 'Чат MAX' : '');
 
-        // Заголовок лида: "Иван | +7 900... · Санаторий «X»" (без лишних ярлыков формы)
+        // Заголовок лида: "Иван | +7 900... — Новый год 2027 · Санаторий «X»"
         let title = (name ? name + ' | ' : '') + (contactLabel || 'Заявка');
+        title += ' — Новый год 2027';
         if (payload.sanatorium) title += ' · ' + payload.sanatorium;
 
         const fields = {
@@ -93,7 +94,6 @@
             c.push('💬 Канал связи: ' + (METHOD_LABELS_RU[payload.contactMethod] || payload.contactMethod));
         }
         if (payload.sanatorium) c.push('🏔 Санаторий: ' + payload.sanatorium);
-        if (payload.program)    c.push('🎭 Новогодняя программа: ' + payload.program);
         if (payload.dates)      c.push('📅 Даты заезда: ' + payload.dates);
         if (payload.nights)     c.push('⏳ Ночей: ' + payload.nights);
         if (payload.guests)     c.push('👥 Гостей: ' + payload.guests);

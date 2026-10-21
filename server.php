@@ -143,7 +143,7 @@ if (mb_strlen($phone) < 10 && !filter_var($emailRaw, FILTER_VALIDATE_EMAIL)) {
 
 // Дополнительные поля форм (sanatorium, dates, guests, programs, contactMethod, comment...)
 $extraFields = ['sanatorium', 'checkIn', 'checkOut', 'dates', 'nights', 'guests', 'adults', 'children',
-                'program', 'contactMethod', 'comment', 'message', 'topic', 'email'];
+                'contactMethod', 'comment', 'message', 'topic', 'email'];
 $extras = [];
 ;
 foreach ($extraFields as $f) {
@@ -154,8 +154,8 @@ foreach ($extraFields as $f) {
 
 // ---- Сборка лида (по образцу functions.php основного сайта) ---------------------
 $formTitles = [
-    'booking' => 'Новый год 2027, Белокуриха',
-    'consult' => 'Консультация — Новый год 2027, Белокуриха',
+    'booking' => 'Новый год 2027',
+    'consult' => 'Консультация — Новый год 2027',
 ];
 $page      = clean((string)($data['page'] ?? ''), 500);
 $pageTitle = clean((string)($data['pageTitle'] ?? ''), 300);
@@ -176,10 +176,12 @@ foreach (['source', 'medium', 'campaign', 'content', 'term'] as $k) {
     }
 }
 
-// Заголовок лида: "Имя | Контакт · Санаторий «X»" (без ярлыков «заявка/форма» — всё видно из контекста)
+// Заголовок лида: "Имя | Контакт — Новый год 2027 · Санаторий «X»"
+// (без ярлыков «заявка/форма» — всё видно из контекста)
 $contactLabel = $phone !== '' ? $phone : ($emailRaw !== '' ? $emailRaw :
     (($extras['contactMethod'] ?? '') === 'MAX' ? 'Чат MAX' : ''));
 $title = ($name !== '' ? $name . ' | ' : '') . ($contactLabel !== '' ? $contactLabel : 'Заявка');
+$title .= ' — Новый год 2027';
 if (!empty($extras['sanatorium'])) $title .= ' · ' . $extras['sanatorium'];
 
 // Комментарий в таймлайн (как в functions.php)
@@ -192,7 +194,6 @@ if ($phone !== '')                         $c[] = "📞 Телефон: {$phone}
 if ($emailRaw !== '')                      $c[] = "📧 Email: {$emailRaw}";
 if (!empty($extras['contactMethod']))      $c[] = '💬 Канал связи: ' . ($methodLabels[$extras['contactMethod']] ?? $extras['contactMethod']);
 if (!empty($extras['sanatorium']))         $c[] = '🏔 Санаторий: ' . $extras['sanatorium'];
-if (!empty($extras['program']))            $c[] = '🎭 Новогодняя программа: ' . $extras['program'];
 if (!empty($extras['dates']))              $c[] = '📅 Даты заезда: ' . $extras['dates'];
 if (!empty($extras['nights']))             $c[] = '⏳ Ночей: ' . $extras['nights'];
 if (!empty($extras['guests']))             $c[] = '👥 Гостей: ' . $extras['guests'];
