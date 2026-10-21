@@ -68,8 +68,8 @@
     // ------------------------------------------------------------------
 
     const FORM_TITLES = {
-        booking: 'Форма бронирования — Новый год 2027, Белокуриха',
-        consult: 'Быстрая консультация — Новый год 2027, Белокуриха'
+        booking: 'Новый год 2027, Белокуриха',
+        consult: 'Консультация — Новый год 2027, Белокуриха'
     };
 
     /** Читаем utm_* из query-строки текущего URL. */
@@ -99,6 +99,31 @@
     }
 
     /** Заявка с основной формы бронирования (#bookingMainForm) */
+
+    // Человекочитаемые названия новогодних программ по санаториям (секция #programs).
+    // Значение синхронизировано с активным табом; при клике обновляет hidden-поле формы.
+    const PROGRAM_LABELS = {
+        belokurikha: 'Белокуриха: «Высота 2027», «Дереза Пати», «Козырный Новый год»',
+        sibir: 'Сибирь: «Тысяча масок и одна ночь», «Золотое руно»',
+        katun: 'Катунь: «Новогодняя ночь — время быть вместе», «Музыкальный взрыв»'
+    };
+
+    function syncProgramField() {
+        const hidden = document.getElementById('bookingProgramHidden');
+        if (!hidden) return;
+        const activeTab = document.querySelector('.programs-tab.is-active[data-program-tab]');
+        const key = activeTab ? activeTab.dataset.programTab : '';
+        hidden.value = PROGRAM_LABELS[key] || '';
+    }
+
+    function initProgramSync() {
+        const tabsWrap = document.querySelector('.programs-tabs');
+        if (!tabsWrap) return;
+        // Делегирование: ловим переключение табов в секции #programs
+        tabsWrap.addEventListener('click', syncProgramField);
+        syncProgramField(); // начальная синхронизация (активен таб по умолчанию)
+    }
+
     function leadFromBookingForm(form) {
         const get = (id) => {
             const el = document.getElementById(id);
@@ -116,6 +141,7 @@
         const adults = get('formAdultsInput');
         const children = get('formChildrenInput');
         const comment = get('bookingComment');
+        const program = get('bookingProgramHidden');
 
         // payload для транспорта (server.php на проде / dev-leads.js на дев-полигоне)
         const payload = {
@@ -123,6 +149,7 @@
             name,
             phone: contact,
             sanatorium: sanatoriumLabel,
+            program,
             checkIn: get('bookingDateStart') || '',
             checkOut: get('bookingDateEnd') || '',
             dates,
@@ -158,6 +185,14 @@
         submitLead,
         leadFromBookingForm,
         leadFromQuickConsultForm,
-        buildLeadContext
+        buildLeadContext,
+        initProgramSync
     };
+
+    // Автозапуск синхронизации программы с активным табом #programs
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initProgramSync);
+    } else {
+        initProgramSync();
+    }
 })(window);

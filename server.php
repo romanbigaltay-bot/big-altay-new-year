@@ -154,8 +154,8 @@ foreach ($extraFields as $f) {
 
 // ---- Сборка лида (по образцу functions.php основного сайта) ---------------------
 $formTitles = [
-    'booking' => 'Форма бронирования — Новый год 2027, Белокуриха',
-    'consult' => 'Быстрая консультация — Новый год 2027, Белокуриха',
+    'booking' => 'Новый год 2027, Белокуриха',
+    'consult' => 'Консультация — Новый год 2027, Белокуриха',
 ];
 $page      = clean((string)($data['page'] ?? ''), 500);
 $pageTitle = clean((string)($data['pageTitle'] ?? ''), 300);
@@ -176,11 +176,10 @@ foreach (['source', 'medium', 'campaign', 'content', 'term'] as $k) {
     }
 }
 
-// Заголовок лида: "Имя | Контакт — Заявка с лендинга — <форма> · <санаторий>"
+// Заголовок лида: "Имя | Контакт · Санаторий «X»" (без ярлыков «заявка/форма» — всё видно из контекста)
 $contactLabel = $phone !== '' ? $phone : ($emailRaw !== '' ? $emailRaw :
     (($extras['contactMethod'] ?? '') === 'MAX' ? 'Чат MAX' : ''));
-$title = ($name !== '' ? $name . ' | ' : '') . ($contactLabel !== '' ? $contactLabel : 'Заявка') .
-         ' — Заявка с лендинга — ' . ($formTitle !== '' ? $formTitle : 'Лендинг «Новый год 2027»');
+$title = ($name !== '' ? $name . ' | ' : '') . ($contactLabel !== '' ? $contactLabel : 'Заявка');
 if (!empty($extras['sanatorium'])) $title .= ' · ' . $extras['sanatorium'];
 
 // Комментарий в таймлайн (как в functions.php)
@@ -193,6 +192,7 @@ if ($phone !== '')                         $c[] = "📞 Телефон: {$phone}
 if ($emailRaw !== '')                      $c[] = "📧 Email: {$emailRaw}";
 if (!empty($extras['contactMethod']))      $c[] = '💬 Канал связи: ' . ($methodLabels[$extras['contactMethod']] ?? $extras['contactMethod']);
 if (!empty($extras['sanatorium']))         $c[] = '🏔 Санаторий: ' . $extras['sanatorium'];
+if (!empty($extras['program']))            $c[] = '🎭 Новогодняя программа: ' . $extras['program'];
 if (!empty($extras['dates']))              $c[] = '📅 Даты заезда: ' . $extras['dates'];
 if (!empty($extras['nights']))             $c[] = '⏳ Ночей: ' . $extras['nights'];
 if (!empty($extras['guests']))             $c[] = '👥 Гостей: ' . $extras['guests'];
