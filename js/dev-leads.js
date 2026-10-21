@@ -53,24 +53,19 @@
 
     /**
      * Формирование полей лида по образцу functions.php основного сайта:
-     * TITLE = "Имя | Контакт — Заявка с лендинга — Контекст", контакты в
-     * PHONE/EMAIL, UTM_* отдельными полями; детали — комментарием в таймлайн.
+     * TITLE = "Имя | Контакт · Санаторий", контакты в PHONE/EMAIL, UTM_*
+     * отдельными полями; детали (включая новогоднюю программу) — комментарием
+     * в таймлайн. Ярлыки «заявка/форма» в TITLE не пишем — лишняя информация.
      */
     function buildLeadFields(payload) {
-        const source = payload.source === 'consult' ? 'consult' : 'booking';
-        const formTitle = payload.formTitle || (source === 'consult'
-            ? 'Быстрая консультация — Новый год 2027, Белокуриха'
-            : 'Форма бронирования — Новый год 2027, Белокуриха');
-
         const utm = payload.utm && typeof payload.utm === 'object' ? payload.utm : {};
         const name = (payload.name || '').trim();
         const phone = (payload.phone || '').trim();
         const email = (payload.email || '').trim();
         const contactLabel = phone || email || (payload.contactMethod === 'MAX' ? 'Чат MAX' : '');
 
-        // Заголовок лида: "Иван | +7 900... — Заявка с лендинга — <форма>"
-        let title = (name ? name + ' | ' : '') + (contactLabel || 'Заявка') +
-                    ' — Заявка с лендинга — ' + formTitle;
+        // Заголовок лида: "Иван | +7 900... · Санаторий «X»" (без лишних ярлыков формы)
+        let title = (name ? name + ' | ' : '') + (contactLabel || 'Заявка');
         if (payload.sanatorium) title += ' · ' + payload.sanatorium;
 
         const fields = {
@@ -98,6 +93,7 @@
             c.push('💬 Канал связи: ' + (METHOD_LABELS_RU[payload.contactMethod] || payload.contactMethod));
         }
         if (payload.sanatorium) c.push('🏔 Санаторий: ' + payload.sanatorium);
+        if (payload.program)    c.push('🎭 Новогодняя программа: ' + payload.program);
         if (payload.dates)      c.push('📅 Даты заезда: ' + payload.dates);
         if (payload.nights)     c.push('⏳ Ночей: ' + payload.nights);
         if (payload.guests)     c.push('👥 Гостей: ' + payload.guests);

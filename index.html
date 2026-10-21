@@ -355,7 +355,7 @@
                 </div>
 
                 <!-- Tab Panels Container -->
-                <div class="programs-panels">
+                <div class="programs-panels" id="programsPanels">
                     <!-- Panel 1: Belokurikha (3 programs in different venues) -->
                     <div class="programs-panel is-active" id="programTabBelokurikha" role="tabpanel" aria-labelledby="tabBtnBelokurikha">
                         <div class="programs-grid programs-grid--3">
@@ -855,6 +855,7 @@
                                     </span>
                                 </button>
                                 <input type="hidden" name="booking_sanatorium" id="bookingSanatoriumInput" value="belokurikha">
+                                <input type="hidden" name="booking_program" id="bookingProgramHidden" value="">
 
                                 <div class="form-popover form-popover--sanatorium" id="sanatoriumPopover" role="listbox">
                                     <button type="button" class="form-popover__option is-selected" data-val="belokurikha" data-title="Санаторий «Белокуриха»" data-sub="В начале курортной зоны">
