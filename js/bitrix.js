@@ -63,6 +63,41 @@
         }
     }
 
+    // ------------------------------------------------------------------
+    // Контекст страницы и UTM (по образцу functions.php основного сайта)
+    // ------------------------------------------------------------------
+
+    const FORM_TITLES = {
+        booking: 'Форма бронирования — Новый год 2027, Белокуриха',
+        consult: 'Быстрая консультация — Новый год 2027, Белокуриха'
+    };
+
+    /** Читаем utm_* из query-строки текущего URL. */
+    function collectUtm() {
+        const p = new URLSearchParams(global.location.search);
+        const utm = {};
+        ['source', 'medium', 'campaign', 'content', 'term'].forEach(function (k) {
+            const v = p.get('utm_' + k);
+            if (v) utm[k] = v.trim();
+        });
+        return utm;
+    }
+
+    /**
+     * Единый блок контекста заявки: страница, форма, реферер, UTM.
+     * @param {string} formId 'booking' | 'consult'
+     */
+    function buildLeadContext(formId) {
+        return {
+            page: global.location.href.split('#')[0],
+            pageTitle: document.title,
+            formId: formId,
+            formTitle: FORM_TITLES[formId] || formId,
+            referrer: document.referrer || '',
+            utm: collectUtm()
+        };
+    }
+
     /** Заявка с основной формы бронирования (#bookingMainForm) */
     function leadFromBookingForm(form) {
         const get = (id) => {
@@ -82,7 +117,7 @@
         const children = get('formChildrenInput');
         const comment = get('bookingComment');
 
-        // payload для серверного прокси (server.php сам соберёт лид в CRM)
+        // payload для транспорта (server.php на проде / dev-leads.js на дев-полигоне)
         const payload = {
             source: 'booking',
             name,
@@ -96,7 +131,8 @@
             adults,
             children,
             contactMethod: METHOD_LABELS[method] || method,
-            comment
+            comment,
+            ...buildLeadContext('booking')
         };
 
         // Если способ связи — email, кладём адрес в отдельное поле
@@ -113,13 +149,15 @@
         return {
             source: 'consult',
             name: 'Гость лендинга',
-            phone
+            phone,
+            ...buildLeadContext('consult')
         };
     }
 
     global.BigAltayCRM = {
         submitLead,
         leadFromBookingForm,
-        leadFromQuickConsultForm
+        leadFromQuickConsultForm,
+        buildLeadContext
     };
 })(window);

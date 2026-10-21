@@ -52,8 +52,118 @@
     global.LEADS_ENDPOINT = resolveEndpoint();
 
     /**
+     * Формирование полей лида по образцу functions.php основного сайта:
+     * TITLE = "Имя | Контакт — Заявка с лендинга — Контекст", контакты в
+     * PHONE/EMAIL, UTM_* отдельными полями; детали — комментарием в таймлайн.
+     */
+    function buildLeadFields(payload) {
+        const source = payload.source === 'consult' ? 'consult' : 'booking';
+        const formTitle = payload.formTitle || (source === 'consult'
+            ? 'Быстрая консультация — Новый год 2027, Белокуриха'
+            : 'Форма бронирования — Новый год 2027, Белокуриха');
+
+        const utm = payload.utm && typeof payload.utm === 'object' ? payload.utm : {};
+        const name = (payload.name || '').trim();
+        const phone = (payload.phone || '').trim();
+        const email = (payload.email || '').trim();
+        const contactLabel = phone || email || (payload.contactMethod === 'MAX' ? 'Чат MAX' : '');
+
+        // Заголовок лида: "Иван | +7 900... — Заявка с лендинга — <форма>"
+        let title = (name ? name + ' | ' : '') + (contactLabel || 'Заявка') +
+                    ' — Заявка с лендинга — ' + formTitle;
+        if (payload.sanatorium) title += ' · ' + payload.sanatorium;
+
+        const fields = {
+            TITLE: title,
+            STATUS_ID: 'NEW',
+            SOURCE_ID: 'WEB',
+            SOURCE_DESCRIPTION: payload.page || ''
+        };
+        if (name) fields.NAME = name;
+        if (phone) fields.PHONE = [{ VALUE: phone, VALUE_TYPE: 'WORK' }];
+        if (email) fields.EMAIL = [{ VALUE: email, VALUE_TYPE: 'WORK' }];
+        ['source', 'medium', 'campaign', 'content', 'term'].forEach(function (k) {
+            if (utm[k]) fields['UTM_' + k.toUpperCase()] = utm[k];
+        });
+
+        // ---------- Комментарий в таймлайн (как в functions.php) ----------
+        const METHOD_LABELS_RU = { 'звонок': 'Телефон', 'email': 'Email', 'MAX': 'Чат MAX' };
+        const c = [];
+        c.push('📌 ДЕТАЛИ ЗАЯВКИ С ЛЕНДИНГА «НОВЫЙ ГОД 2027»');
+        c.push('----------------------------------------');
+        if (name)    c.push('👤 Имя: ' + name);
+        if (phone)   c.push('📞 Телефон: ' + phone);
+        if (email)   c.push('📧 Email: ' + email);
+        if (payload.contactMethod) {
+            c.push('💬 Канал связи: ' + (METHOD_LABELS_RU[payload.contactMethod] || payload.contactMethod));
+        }
+        if (payload.sanatorium) c.push('🏔 Санаторий: ' + payload.sanatorium);
+        if (payload.dates)      c.push('📅 Даты заезда: ' + payload.dates);
+        if (payload.nights)     c.push('⏳ Ночей: ' + payload.nights);
+        if (payload.guests)     c.push('👥 Гостей: ' + payload.guests);
+        if (payload.comment)    c.push('📝 Комментарий / Пожелания: ' + payload.comment);
+        c.push('');
+        c.push('----------------------------------------');
+        c.push('📍 СТРАНИЦА И ИСТОЧНИК');
+        c.push('----------------------------------------');
+        c.push('📄 Страница: ' + (payload.pageTitle || 'Лендинг «Новый год 2027»'));
+        if (payload.page)     c.push('🌐 URL: ' + payload.page);
+        if (payload.formTitle || payload.formId) {
+            c.push('📋 Форма: ' + (payload.formTitle || payload.formId));
+        }
+        if (payload.referrer && payload.referrer !== payload.page) {
+            c.push('🔗 Реферер: ' + payload.referrer);
+        }
+        c.push('');
+        c.push('----------------------------------------');
+        const hasUtm = ['source', 'medium', 'campaign', 'content', 'term']
+            .some(function (k) { return !!utm[k]; });
+        if (hasUtm) {
+            c.push('🎯 UTM МЕТКИ');
+            c.push('----------------------------------------');
+            if (utm.source)   c.push('• Источник (utm_source): ' + utm.source);
+            if (utm.medium)   c.push('• Канал (utm_medium): ' + utm.medium);
+            if (utm.campaign) c.push('• Кампания (utm_campaign): ' + utm.campaign);
+            if (utm.content)  c.push('• Содержание (utm_content): ' + utm.content);
+            if (utm.term)     c.push('• Ключевое слово (utm_term): ' + utm.term);
+            c.push('----------------------------------------');
+        } else {
+            c.push('🎯 UTM метки: отсутствуют (прямой заход / органика)');
+            c.push('----------------------------------------');
+        }
+        try {
+            c.push('🕒 Время заявки: ' + new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }) + ' (МСК)');
+        } catch (_) { /* без времени */ }
+
+        fields.COMMENTS = c.join('\n');
+        return fields;
+    }
+
+    /**
+     * Детальный комментарий в таймлайн лида (как crm.timeline.comment.add в
+     * functions.php основного сайта). COMMENT не возвращается через
+     * crm.lead.get (проверено на лиде 143668), поэтому пишем отдельный метод.
+     * Ошибка комментария не должна валить отправку заявки — только warn.
+     */
+    async function addTimelineComment(hook, leadId, commentText) {
+        try {
+            const body = new URLSearchParams();
+            body.set('fields[ENTITY_ID]', String(leadId));
+            body.set('fields[ENTITY_TYPE]', 'lead');
+            body.set('fields[COMMENT]', commentText);
+            await fetch(hook.replace(/\/$/, '') + '/crm.timeline.comment.add.json', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+                body: body.toString()
+            });
+        } catch (err) {
+            console.warn('[dev-leads] не удалось добавить комментарий:', err.message);
+        }
+    }
+
+    /**
      * Прямая отправка payload в Bitrix24 (crm.lead.add) с REST-вебхука.
-     * Формат такой же, как у server.php: {ok:true, id:<leadId>} / {ok:false, error}.
+     * Формат ответа такой же, как у server.php: {ok:true, id:<leadId>} / {ok:false, error}.
      * ВАЖНО: Bitrix24 принимает fields только как form-urlencoded (fields[K]=v,
      * массивы — JSON-строкой), поэтому сериализуем через URLSearchParams.
      */
@@ -61,38 +171,25 @@
         const hook = global.LEADS_ENDPOINT;
         if (!hook) throw new Error('DEV endpoint не собран');
 
-        const titleMap = {
-            booking: 'Заявка на бронирование — Новый год 2027, Белокуриха',
-            consult: 'Быстрая консультация — Новый год 2027, Белокуриха'
-        };
-        const source = payload.source === 'consult' ? 'consult' : 'booking';
-        let title = titleMap[source];
-        if (payload.sanatorium) title += ' · ' + payload.sanatorium;
+        const fields = buildLeadFields(payload);
 
-        const lines = ['Источник: лендинг «Новый год 2027» (' + source + ', dev)',
-                       'Имя: ' + (payload.name || ''),
-                       'Телефон: ' + (payload.phone || '')];
-        Object.keys(payload).forEach(function (k) {
-            if (['source', 'name', 'phone'].indexOf(k) === -1 && payload[k]) {
-                lines.push(k + ': ' + payload[k]);
-            }
-        });
-
-        const fields = {
-            TITLE: title,
-            NAME: payload.name || '',
-            COMMENTS: lines.join('\n'),
-            STATUS_ID: 'NEW',
-            SOURCE_ID: 1
-        };
-        if (payload.phone) fields.PHONE = [{ VALUE: payload.phone, VALUE_TYPE: 'WORK' }];
-        if (payload.email) fields.EMAIL = [{ VALUE: payload.email, VALUE_TYPE: 'WORK' }];
-
+        // Сериализация: скаляры — fields[K]=v; массивы/объекты (multi-поля
+        // PHONE/EMAIL) — в виде вложенной формы fields[PHONE][0][VALUE]=...,
+        // иначе Bitrix24 молча игнорирует JSON-строку (проверено на лиде 143666).
         const body = new URLSearchParams();
+        function appendNested(prefix, value) {
+            if (Array.isArray(value)) {
+                value.forEach(function (item, i) { appendNested(prefix + '[' + i + ']', item); });
+            } else if (value && typeof value === 'object') {
+                Object.keys(value).forEach(function (k) { appendNested(prefix + '[' + k + ']', value[k]); });
+            } else {
+                body.set(prefix, String(value));
+            }
+        }
         Object.keys(fields).forEach(function (k) {
-            body.set('fields[' + k + ']', typeof fields[k] === 'object'
-                ? JSON.stringify(fields[k])
-                : String(fields[k]));
+            const v = fields[k];
+            if (Array.isArray(v) || (v && typeof v === 'object')) appendNested('fields[' + k + ']', v);
+            else body.set('fields[' + k + ']', String(v));
         });
 
         const controller = new AbortController();
@@ -108,7 +205,10 @@
             if (!response.ok || !data || typeof data.result !== 'number') {
                 throw new Error((data && (data.message || data.error)) || 'HTTP ' + response.status);
             }
-            return data.result; // lead ID
+            const leadId = data.result;
+            // Детальный комментарий в таймлайн (как на основном сайте)
+            await addTimelineComment(hook, leadId, fields.COMMENTS);
+            return leadId;
         } finally {
             clearTimeout(timer);
         }
