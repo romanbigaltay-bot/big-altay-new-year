@@ -6,7 +6,9 @@
  *  1. Falling Snow Canvas Shader (Performance-optimized, Retina-ready)
  *  2. Header Scroll & Mobile Drawer Navigation
  *  3. Sanatoriums Filter Tabs
- *  4. Interactive Holiday Cost Calculator
+ *  4. Booking Form (formerly "calculator" — decision: no price calculation,
+ *     sales run through a manager; see AGENTS.md) + Bitrix24 lead creation
+ *     via js/bitrix.js (window.BigAltayCRM)
  *  5. Accessible Accordion (FAQ)
  *  6. Modal Dialogs & Booking Triggers
  *  7. Form Validation & Toast Feedback
@@ -637,39 +639,68 @@
             }, 6000);
         }
 
-        form.addEventListener('submit', (e) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
-
-            // When MAX is selected, redirect directly to MAX without sending to CRM (keeping button appearance identical)
-            if (bookingMethodInput && bookingMethodInput.value === 'max') {
-                const maxUrl = (bookingMaxBtn && bookingMaxBtn.getAttribute('href')) || 'https://max.ru/id2203004205_bot';
-                window.open(maxUrl, '_blank', 'noopener,noreferrer');
-                return;
-            }
 
             const submitBtn = document.getElementById('bookingSubmitBtn');
             const nameInput = document.getElementById('bookingName');
             const commentInput = document.getElementById('bookingComment');
+
+            // When MAX is selected, redirect directly to MAX and also create a lead in CRM
+            if (bookingMethodInput && bookingMethodInput.value === 'max') {
+                const maxUrl = (bookingMaxBtn && bookingMaxBtn.getAttribute('href')) || 'https://max.ru/id2203004205_bot';
+                window.open(maxUrl, '_blank', 'noopener,noreferrer');
+
+                if (window.BigAltayCRM) {
+                    try {
+                        await window.BigAltayCRM.submitLead(window.BigAltayCRM.leadFromBookingForm(form));
+                    } catch (err) {
+                        console.error('[Bitrix24] заявка MAX не создана:', err);
+                    }
+                }
+                return;
+            }
+
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
 
             if (submitBtn) {
                 submitBtn.disabled = true;
                 submitBtn.textContent = 'Отправка заявки...';
             }
 
-            setTimeout(() => {
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Оставить заявку';
+            let leadId = null;
+            if (window.BigAltayCRM) {
+                try {
+                    leadId = await window.BigAltayCRM.submitLead(window.BigAltayCRM.leadFromBookingForm(form));
+                } catch (err) {
+                    console.error('[Bitrix24] ошибка создания лида:', err);
                 }
+            }
+
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Оставить заявку';
+            }
+
+            if (leadId !== null) {
                 if (nameInput) nameInput.value = '';
                 if (bookingPhone) bookingPhone.value = '';
                 if (commentInput) commentInput.value = '';
+                form.reset();
 
                 showToast(
                     'Заявка на бронирование принята!',
                     'Специалист по курорту Белокуриха свяжется с вами в течение 10 минут с деталями по новогодним номерам.'
                 );
-            }, 700);
+            } else {
+                showToast(
+                    'Не удалось отправить заявку',
+                    'Попробуйте ещё раз или позвоните нам: 8 (800) 500-07-34.'
+                );
+            }
         });
 
         // Initialize state
@@ -874,7 +905,7 @@
             formatPhone(mainPhone);
         }
 
-        form.addEventListener('submit', (e) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             if (!phoneInput || !phoneInput.value.trim()) {
@@ -887,18 +918,35 @@
                 submitBtn.textContent = 'Отправка...';
             }
 
-            setTimeout(() => {
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Получить консультацию';
+            let leadId = null;
+            if (window.BigAltayCRM) {
+                try {
+                    leadId = await window.BigAltayCRM.submitLead(
+                        window.BigAltayCRM.leadFromQuickConsultForm(phoneInput.value.trim())
+                    );
+                } catch (err) {
+                    console.error('[Bitrix24] ошибка создания лида (консультация):', err);
                 }
+            }
+
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Получить консультацию';
+            }
+
+            if (leadId !== null) {
                 if (phoneInput) phoneInput.value = '';
 
                 showToast(
                     'Заявка на консультацию принята!',
                     'Наш специалист свяжется с вами для предоставления консультации.'
                 );
-            }, 650);
+            } else {
+                showToast(
+                    'Не удалось отправить заявку',
+                    'Попробуйте ещё раз или позвоните нам: 8 (800) 500-07-34.'
+                );
+            }
         });
     }
 
