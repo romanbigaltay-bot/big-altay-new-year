@@ -504,6 +504,8 @@ button {
     flex-wrap: wrap;
     gap: 12px;
     margin-bottom: 48px;
+    position: relative; /* creates a stacking context above the decorative Ded Moroz */
+    z-index: 3;
 }
 
 .hero-tag {
