@@ -451,6 +451,21 @@ button {
     user-select: none;
 }
 
+/* Decorative Christmas tree in the hero — mirror of Ded Moroz:
+   same 320x480 box, right-bottom corner (right offset mirrors left: 130px),
+   above the background/snow canvas, below the hero content. */
+.hero-decoration-elka {
+    position: absolute;
+    right: 130px;
+    bottom: -40px;
+    width: 320px;
+    height: 480px;
+    object-fit: contain;
+    z-index: 1;
+    pointer-events: none;
+    user-select: none;
+}
+
 .hero-content {
     max-width: 980px;
     margin: 0 auto;
@@ -2868,6 +2883,11 @@ button {
 
     /* Decorative Ded Moroz is too large for narrow screens — hide it */
     .hero-decoration-ded-moroz {
+        display: none;
+    }
+
+    /* Mirror decoration (Christmas tree) — hidden on mobile as well */
+    .hero-decoration-elka {
         display: none;
     }
 
