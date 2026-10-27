@@ -441,7 +441,7 @@ button {
    Above the background/snow canvas, below the hero content. */
 .hero-decoration-ded-moroz {
     position: absolute;
-    left: 0;
+    left: 130px;
     bottom: -40px;
     width: 320px;
     height: 480px;
