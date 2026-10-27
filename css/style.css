@@ -437,6 +437,20 @@ button {
     text-align: center;
 }
 
+/* Decorative Ded Moroz in the hero (320x480 box, left-bottom corner of the container).
+   Above the background/snow canvas, below the hero content. */
+.hero-decoration-ded-moroz {
+    position: absolute;
+    left: 0;
+    bottom: -40px;
+    width: 320px;
+    height: 480px;
+    object-fit: contain;
+    z-index: 1;
+    pointer-events: none;
+    user-select: none;
+}
+
 .hero-content {
     max-width: 980px;
     margin: 0 auto;
@@ -2848,6 +2862,11 @@ button {
     .hero-section {
         padding-top: 48px;
         padding-bottom: 80px;
+    }
+
+    /* Decorative Ded Moroz is too large for narrow screens — hide it */
+    .hero-decoration-ded-moroz {
+        display: none;
     }
 
     .form-popover--calendar,
