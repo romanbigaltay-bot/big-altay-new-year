@@ -1029,6 +1029,9 @@ button {
     padding-bottom: 120px;
     position: relative;
     z-index: 2;
+    /* важно: без overflow:hidden декор выступает за нижнюю границу секции
+       (как в hero) и не обрезается */
+    overflow: visible;
 }
 
 /* Decorative stars in the quick-consult section: left-bottom corner,
@@ -1038,8 +1041,8 @@ button {
     position: absolute;
     left: 220px; /* сдвиг от левого края к центру (к форме) по ТЗ */
     bottom: -40px;
-    width: 320px;
-    height: 480px;
+    width: 640px; /* увеличены в 2 раза по ТЗ (было 320x480) */
+    height: 960px;
     object-fit: contain;
     transform: scaleX(-1);
     z-index: 1;
@@ -1048,7 +1051,10 @@ button {
 }
 
 /* Decorative Ded Moroz in the quick-consult section: right-bottom corner,
-   mirrored horizontally (scaleX(-1) — he faces left, towards the form). */
+   mirrored horizontally (scaleX(-1) — he faces left, towards the form).
+   z-index: 3 + overflow: visible — как Дед Мороз в hero: он выступает ногами
+   за нижнюю границу секции и рисуется ПОВЕРХ фона следующего блока (#programs),
+   а не обрезается им (соседние секции имели тот же z-index: 2 и перекрывали его). */
 .consult-decoration-ded-moroz {
     position: absolute;
     right: 220px; /* сдвиг от правого края к центру (к форме) по ТЗ */
@@ -1057,7 +1063,7 @@ button {
     height: 480px;
     object-fit: contain;
     transform: scaleX(-1);
-    z-index: 1;
+    z-index: 3;
     pointer-events: none;
     user-select: none;
 }
