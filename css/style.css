@@ -1031,10 +1031,43 @@ button {
     z-index: 2;
 }
 
+/* Decorative stars in the quick-consult section: left-bottom corner,
+   mirrored horizontally (scaleX(-1)). Same pattern as hero decorations:
+   above the section background, below the content (content gets z-index:2). */
+.consult-decoration-stars {
+    position: absolute;
+    left: 0;
+    bottom: -40px;
+    width: 320px;
+    height: 480px;
+    object-fit: contain;
+    transform: scaleX(-1);
+    z-index: 1;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* Decorative Ded Moroz in the quick-consult section: right-bottom corner,
+   mirrored horizontally (scaleX(-1) — he faces left, towards the form). */
+.consult-decoration-ded-moroz {
+    position: absolute;
+    right: 0;
+    bottom: -40px;
+    width: 320px;
+    height: 480px;
+    object-fit: contain;
+    transform: scaleX(-1);
+    z-index: 1;
+    pointer-events: none;
+    user-select: none;
+}
+
 .quick-consult {
     max-width: 660px;
     margin: 0 auto;
     text-align: center;
+    position: relative;
+    z-index: 2;
 }
 
 .quick-consult__title {
@@ -2888,6 +2921,12 @@ button {
 
     /* Mirror decoration (Christmas tree) — hidden on mobile as well */
     .hero-decoration-elka {
+        display: none;
+    }
+
+    /* Quick-consult decorations (stars + Ded Moroz) — hidden on mobile, same rule as hero ones */
+    .consult-decoration-stars,
+    .consult-decoration-ded-moroz {
         display: none;
     }
 
