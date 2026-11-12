@@ -1036,7 +1036,7 @@ button {
    above the section background, below the content (content gets z-index:2). */
 .consult-decoration-stars {
     position: absolute;
-    left: 0;
+    left: 220px; /* сдвиг от левого края к центру (к форме) по ТЗ */
     bottom: -40px;
     width: 320px;
     height: 480px;
@@ -1051,7 +1051,7 @@ button {
    mirrored horizontally (scaleX(-1) — he faces left, towards the form). */
 .consult-decoration-ded-moroz {
     position: absolute;
-    right: 0;
+    right: 220px; /* сдвиг от правого края к центру (к форме) по ТЗ */
     bottom: -40px;
     width: 320px;
     height: 480px;
