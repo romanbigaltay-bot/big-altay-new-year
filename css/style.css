@@ -1028,19 +1028,21 @@ button {
     padding-top: 60px;
     padding-bottom: 120px;
     position: relative;
-    z-index: 2;
-    /* важно: без overflow:hidden декор выступает за нижнюю границу секции
-       (как в hero) и не обрезается */
+    /* ВАЖНО: z-index НЕ задаём. Как у .hero-section (position:relative без z-index):
+       секция не создаёт stacking context, и абсолютно позиционированный декор
+       участвует в глобальном порядке слоёв страницы напрямую. Если задать здесь
+       z-index (даже высокий), весь контент секции (z:2) тоже поднимется над
+       следующим блоком (#programs) и начнёт его перекрывать — баг 27.10. */
     overflow: visible;
 }
 
 /* Decorative stars in the quick-consult section: left-bottom corner,
    mirrored horizontally (scaleX(-1)). Same pattern as hero decorations:
-   above the section background, below the content (content gets z-index:2). */
+   above the section background, below the content. */
 .consult-decoration-stars {
     position: absolute;
-    left: 220px; /* сдвиг от левого края к центру (к форме) по ТЗ */
-    bottom: -40px;
+    left: 140px; /* было 220px: по ТЗ сдвинуть левее на 80px */
+    bottom: -280px; /* было -40px: по ТЗ опустить на 240px (картинка 960px высотой — «вырастает» из-под секции) */
     width: 640px; /* увеличены в 2 раза по ТЗ (было 320x480) */
     height: 960px;
     object-fit: contain;
@@ -1052,9 +1054,12 @@ button {
 
 /* Decorative Ded Moroz in the quick-consult section: right-bottom corner,
    mirrored horizontally (scaleX(-1) — he faces left, towards the form).
-   z-index: 3 + overflow: visible — как Дед Мороз в hero: он выступает ногами
-   за нижнюю границу секции и рисуется ПОВЕРХ фона следующего блока (#programs),
-   а не обрезается им (соседние секции имели тот же z-index: 2 и перекрывали его). */
+   Копия механики hero (.hero-decoration-ded-moroz): decor z-index:1, контент
+   формы получает свой stacking context z-index:2 → декор гарантированно ПОД
+   контентом. За счёт overflow:visible у секции и отсутствия z-index у самой
+   секции Дед Мороз выступает ногами за нижнюю границу блока и виден ПОВЕРХ
+   фона следующего блока #programs (без z-index он оставался бы в root-context
+   ниже positioned-секции z:2 — баг «исправление z-index не помог», 27.10). */
 .consult-decoration-ded-moroz {
     position: absolute;
     right: 220px; /* сдвиг от правого края к центру (к форме) по ТЗ */
@@ -1063,7 +1068,7 @@ button {
     height: 480px;
     object-fit: contain;
     transform: scaleX(-1);
-    z-index: 3;
+    z-index: 1;
     pointer-events: none;
     user-select: none;
 }
@@ -1073,7 +1078,7 @@ button {
     margin: 0 auto;
     text-align: center;
     position: relative;
-    z-index: 2;
+    z-index: 2; /* как .hero-section__container в hero: контент выше декора (z:1) */
 }
 
 .quick-consult__title {
