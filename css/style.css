@@ -1042,7 +1042,7 @@ button {
 .consult-decoration-stars {
     position: absolute;
     left: 40px; /* было 140px: по ТЗ ещё левее на 100px */
-    bottom: -280px; /* было -40px: по ТЗ опустить на 240px (картинка 960px высотой — «вырастает» из-под секции) */
+    bottom: -300px; /* было -280px: по ТЗ поднять на 20px (27.10, вторая итерация) */
     width: 640px; /* увеличены в 2 раза по ТЗ (было 320x480) */
     height: 960px;
     object-fit: contain;
@@ -1071,7 +1071,17 @@ button {
     height: 480px;
     object-fit: contain;
     transform: scaleX(-1);
-    z-index: 1;
+    /* ИСТИННАЯ ПРИЧИНА ОБРЕЗКИ НОГ (диагноз 27.10, после 3 неудачных итераций):
+       ноги выступали за padding-bottom секции, но оставались ВНУТРИ её
+       content-box — а сам блок #programs имеет непрозрачный белый фон
+       (.section--programs background:#ffffff) и в стековом порядке идёт ПОСЛЕ
+       секции consult. При z-index:1 декор проигрывал фону #programs (z:1, DOM
+       later) — ноги тонули под белым фоном («обрезаны»). В hero тот же приём
+       работал лишь потому, что у hero z-index:30 (см. .hero-section).
+       ЛЕЧЕНИЕ ТОЙ ЖЕ МЕХАНИКОЙ hero: поднимаем сам декор над соседними
+       секциями. Контент consult не пострадает — он лежит выше по DOM и тоже
+       имеет z:2 внутри своего контекста. */
+    z-index: 30; /* как .hero-section: выступающий декор рисуется поверх фона следующей секции */
     pointer-events: none;
     user-select: none;
 }
