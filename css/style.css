@@ -1041,7 +1041,7 @@ button {
    above the section background, below the content. */
 .consult-decoration-stars {
     position: absolute;
-    left: 140px; /* было 220px: по ТЗ сдвинуть левее на 80px */
+    left: 40px; /* было 140px: по ТЗ ещё левее на 100px */
     bottom: -280px; /* было -40px: по ТЗ опустить на 240px (картинка 960px высотой — «вырастает» из-под секции) */
     width: 640px; /* увеличены в 2 раза по ТЗ (было 320x480) */
     height: 960px;
@@ -1054,12 +1054,15 @@ button {
 
 /* Decorative Ded Moroz in the quick-consult section: right-bottom corner,
    mirrored horizontally (scaleX(-1) — he faces left, towards the form).
-   Копия механики hero (.hero-decoration-ded-moroz): decor z-index:1, контент
-   формы получает свой stacking context z-index:2 → декор гарантированно ПОД
-   контентом. За счёт overflow:visible у секции и отсутствия z-index у самой
-   секции Дед Мороз выступает ногами за нижнюю границу блока и виден ПОВЕРХ
-   фона следующего блока #programs (без z-index он оставался бы в root-context
-   ниже positioned-секции z:2 — баг «исправление z-index не помог», 27.10). */
+   ТОЧНАЯ КОПИЯ МЕХАНИКИ HERO, где ноги Деда Мороза корректно выступают за
+   границы блока (сравнение 27.10):
+   .hero-section        -> .section--quick-consult : position:relative без своего z-index, overflow:visible
+   .hero-content z:2    -> .quick-consult z:2      : контент поверх декора
+   .hero-decoration z:1 -> decor z:1               : декор под контентом
+   Соседний блок в hero (#sanatoriums, z:1) идёт ДОМ в DOM после hero — его фон
+   рисуется над выступающим декором. Здесь полный аналог: #programs обязан быть
+   z:1 (как .section по умолчанию), а НЕ z:2. Именно z:2 у .section--programs
+   обрезал ноги Деда Мороза (баг 27.10: «исправление z-index не помог»). */
 .consult-decoration-ded-moroz {
     position: absolute;
     right: 220px; /* сдвиг от правого края к центру (к форме) по ТЗ */
@@ -1176,7 +1179,10 @@ button {
     background: #ffffff;
     padding: 120px 0;
     position: relative;
-    z-index: 2;
+    /* z-index убран (был 2): как у соседних секций hero/#sanatoriums (z:1 по
+       умолчанию .section). Это обязательная часть механики «декор выступает
+       ногами за блок»: при z:2 фон #programs перекрывал Деда Мороза из
+       #quickConsult (см. комментарий .consult-decoration-ded-moroz). */
 }
 
 .programs-tabs-wrap {
